@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>Ngeu'la' Mbäfeung</title>
+<meta name="theme-color" content="#1a1a1a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mbäfeung">
+<style>
+/* ============================================================
+   MBÄFEUNG — mobile-only, full-screen calendar app
+   Extracted calendar data logic + design from the source page;
+   everything unrelated (search results, header/nav, footer links,
+   widget) removed. Rebuilt as its own standalone app.
+   ============================================================ */
+*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; overscroll-behavior:none; }
+body{
+    font-family: sans-serif;
+    background: radial-gradient(ellipse at bottom right, rgb(30, 22, 17) 0%, rgb(15,15,15) 55%, rgb(10,10,10) 100%);
+    color: white;
+    height:100dvh;
+    width:100vw;
+    overflow:hidden;
+    position:fixed;
+    inset:0;
+}
+:root{
+    --calDark: rgb(49,49,49);
+    --calLight: rgb(255,255,255);
+    --calLights: rgba(255,255,255,0.313);
+    --calInteractive: rgba(252,252,252,0.519);
+    --red:#ff4d4d;
+}
+[hidden]{ display:none !important; }
+
+.app{ display:grid; grid-template-rows:auto 1fr auto; height:100dvh; width:100vw; position:relative; }
+
+/* ---------------- top bar ---------------- */
+.topbar{
+    display:grid;
+    grid-template-columns:auto 1fr auto auto auto;
+    align-items:center;
+    column-gap:10px;
+    padding:75px 16px 6px 16px;
+    position:relative;
+    z-index:20;
+}
+.iconbtn{
+    background:none; border:none; color:white; cursor:pointer;
+    width:28px; height:28px; display:grid; place-items:center; padding:0;
+}
+.iconbtn svg{ width:22px; height:22px; }
+.brand{ font-size:1.05rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.badge{
+    justify-self:end;
+    min-width:30px; height:30px; padding:0 6px;
+    border:1.5px solid white; border-radius:8px;
+    background:none; color:white; font-weight:bold; font-size:0.95rem;
+    display:grid; place-items:center; cursor:pointer;
+}
+
+/* ---------------- search popup (unchanged look/behaviour) ---------------- */
+.searchpopup{
+    display:none;
+    position:absolute; top:52px; left:10px; right:10px; z-index:30;
+    background-color:var(--calDark);
+    border:1px solid white; border-radius:10px;
+    padding:16px 10px;
+    grid-template-columns:repeat(3,1fr) auto;
+    justify-items:center; align-items:center; column-gap:6px;
+}
+.searchpopup.open{ display:grid; animation:calPopIn .18s ease; transform-origin:top right; background:rgba(0, 0, 0, 0.685); border: none; box-shadow: 0 0 20px rgba(255, 255, 255, 0.172); height: 200px;}
+.searchfield{
+    width:80%; min-width:0; border:none; border-bottom:0.1px solid white;
+    border-radius:4px; padding:4px 2px; text-align:center; font:inherit;
+    font-size:0.85rem; color:white; background:rgba(0,0,0,0.55);
+}
+.searchfield.invalid{ border:0.5px solid var(--red); border-radius:4px; }
+.searchgo{
+    width:30px; height:30px; border-radius:50%; border:none;
+    background-color:var(--calInteractive); color:white; cursor:pointer;
+    display:grid; place-items:center;
+}
+.searchgo svg{ width:16px; height:16px; }
+
+/* ---------------- drawer + scrim ---------------- */
+.scrim{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:24;
+}
+.scrim.open{ display:block; }
+.drawer{
+    position:fixed; top:0; left:0; bottom:0; width:78%; max-width:320px;
+    background:#0b0b0b; z-index:25; padding:70px 24px 24px 24px;
+    display:flex; flex-direction:column; row-gap:26px;
+    transform:translateX(-100%); transition:transform .22s ease;
+}
+.drawer.open{ transform:translateX(0); }
+.drawer button{
+    background:none; border:none; color:white; font-size:1.05rem; font-weight:bold;
+    text-align:left; padding:10px 6px; cursor:pointer; opacity:1;
+}
+.drawer button.current{ opacity:0.35; background-color: rgba(255, 255, 255, 0.094);  border-radius: 6px;}
+
+/* ---------------- stage (holds the 4 panels + edge chevrons) ---------------- */
+.stage{ position:relative; overflow:hidden; min-height:0; }
+.edgechevron{
+    position:absolute; top:50%; transform:translateY(-50%); z-index:5;
+    background:none; border:none; color:var(--calLights); font-size:1.6rem;
+    padding:6px 10px; cursor:pointer;
+}
+.edgechevron.left{ left:0; }
+.edgechevron.right{ right:0; }
+.edgechevron[hidden]{ visibility:hidden; }
+
+.panel{
+    position:absolute; inset:0; display:grid; overflow-y:auto; padding:6px 18px 10px 18px;
+}
+
+/* ---------------- day panel ---------------- */
+#panel-day{ grid-template-rows:auto 1fr auto auto; row-gap:6px; text-align:center; align-content:center; }
+.day-weekday{ font-weight:bold; font-size:clamp(1rem,4.5vw,1.6rem); padding-top:100px; }
+.day-weekday small{ display:block; font-weight:normal; opacity:.75; font-size:.6em; padding-top: 5px;}
+.day-num{ display: grid; align-items: center; justify-items: center; font-size:clamp(5rem,26vw,10rem); font-weight:bold; line-height:1; }
+.day-monthyear{ font-weight:bold; font-size:clamp(1rem,4vw,1.4rem); }
+.day-monthyear small{ display:block; font-weight:normal; opacity:.75; font-size:.65em; padding-top: 5px;}
+.day-sentence{ font-size:clamp(.65rem,2.8vw,.85rem); line-height:1.6; opacity:.9; padding-top:14px; padding-bottom: 90px; }
+.day-sentence div + div{ margin-top:3px; }
+
+/* ---------------- week panel (fully independent from month) ---------------- */
+#panel-week{ grid-template-rows:190px 56px 1fr; row-gap:0; }
+#panel-week .grid-title{ display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; text-align:center; font-weight:bold; align-self: start; padding-top:100px; }
+#panel-week .grid-title .t1{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; }
+#panel-week .grid-title .t2{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; margin-top:2px;}
+#panel-week .grid-title .t1 .wk-abbr{ font-weight:200; font-size:.7em; color: #999;}
+#panel-week .weekdaysrow{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; justify-items: center; align-content: center; font-weight:bold; padding-top: 20px;
+    font-size:clamp(.7rem,3.2vw,1rem); }
+#panel-week .weekdaysrow .seo{ color:var(--red); }
+#panel-week .daysgrid{ display:grid; grid-template-columns:repeat(7,1fr); align-content:start; row-gap:clamp(10px,3.5vw,22px); padding-top:15px; padding-bottom: 200px; }
+#panel-week .day-cell{ display:grid; justify-items:center; row-gap:2px; }
+#panel-week .day-cell.empty{ visibility:hidden; }
+#panel-week .day-cellnum{
+    width:clamp(26px,8vw,36px); height:clamp(26px,8vw,36px); border-radius:50%;
+    display:grid; place-items:center; font-size:clamp(.85rem,3.4vw,1.1rem);
+    background:none; border:none; color:white; cursor:pointer; font:inherit; align-self: center;
+}
+#panel-week .day-cellnum.today{ background:white; color:#111; font-weight:bold; }
+#panel-week .day-cellcycle{ font-size:clamp(.5rem,2.2vw,.7rem); opacity:.8; }
+#panel-week .day-cell.red .day-cellnum{ color:var(--red); }
+#panel-week .day-cell.red .day-cellnum.today{ color:#111; }
+#panel-week .day-cell.red .day-cellcycle{ color:var(--red); opacity:1; }
+
+/* ---------------- month panel (fully independent from week) ---------------- */
+#panel-month{ grid-template-rows:190px 56px 1fr; row-gap:0; }
+#panel-month .grid-title{ display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; text-align:center; font-weight:bold; align-self: start; padding-top:100px;  }
+#panel-month .grid-title .t1{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; }
+#panel-month .grid-title .t2{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; margin-top:2px; }
+#panel-month .grid-title .t1 .mo-abbr{ font-weight:200; font-size:.7em; color: #999; }
+#panel-month .weekdaysrow{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; justify-items: center; align-content: center; font-weight:bold; padding-top: 20px;
+    font-size:clamp(.7rem,3.2vw,1rem); }
+#panel-month .weekdaysrow .seo{ color:var(--red); }
+#panel-month .daysgrid{ display:grid; grid-template-columns:repeat(7,1fr); align-content:start; row-gap:clamp(10px,3.5vw,22px); padding-top:15px; padding-bottom: 60px; }
+#panel-month .day-cell{ display:grid; justify-items:center; row-gap:2px; }
+#panel-month .day-cell.empty{ visibility:hidden; }
+#panel-month .day-cellnum{
+    width:clamp(26px,8vw,36px); height:clamp(26px,8vw,36px); border-radius:50%;
+    display:grid; place-items:center; font-size:clamp(.85rem,3.4vw,1.1rem);
+    background:none; border:none; color:white; cursor:pointer; font:inherit; align-self: center;
+}
+#panel-month .day-cellnum.today{ background:white; color:#111; font-weight:bold; }
+#panel-month .day-cellcycle{ font-size:clamp(.5rem,2.2vw,.7rem); opacity:.8; }
+#panel-month .day-cell.red .day-cellnum{ color:var(--red); }
+#panel-month .day-cell.red .day-cellnum.today{ color:#111; }
+#panel-month .day-cell.red .day-cellcycle{ color:var(--red); opacity:1; }
+
+/* ---------------- year panel ---------------- */
+#panel-year{ display:grid; grid-template-rows:auto 1fr; row-gap:8px; padding-top:10px; }
+.year-title{ text-align:center; font-weight:bold; font-size:clamp(1.6rem,7vw,2.4rem); padding-top:100px; }
+.year-grid{ display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr); gap:clamp(6px,2vw,12px); overflow-y:auto; padding-bottom:70px; }
+.minimonth{ display:grid; grid-template-rows:auto auto 1fr; row-gap:2px; padding:2px; border-radius:6px; cursor:pointer; min-width: 0; }
+.minimonth.current .minimonth-title{ text-decoration:underline; }
+.minimonth-title{ font-size:clamp(.5rem,2.3vw,.72rem); font-weight:bold; text-align:center; padding-bottom: 2px; min-width: 0;}
+.minimonth-abbr{ font-size:clamp(.4rem,1.9vw,.6rem); font-weight:200; text-align:center; padding-bottom: 8px; min-width: 0; opacity:.85;}
+.miniweekdays{ display:grid; align-items: center; justify-items: center; grid-template-columns:repeat(7,1fr); font-size:clamp(.35rem,1.6vw,.5rem); min-width: 0;}
+.miniweekdays .seo{ color:var(--red); }
+.minidays{ display:grid; grid-template-columns:repeat(7,1fr); row-gap:2px; min-width: 0;}
+.miniday{ display:flex; flex-direction:column; align-items:center; justify-content:center; aspect-ratio:1/1;
+    font-size:clamp(.3rem,1.5vw,.48rem); line-height:1.15; min-width: 0;}
+    
+.miniday.today{ background:white; color:#111; border-radius:50%; }
+.miniday.empty{ visibility:hidden; }
+.miniday.red{ color:var(--red); }
+.miniday.red.today{ color:#111; }
+.miniday-cycle{ font-size:.75em; opacity:.75; }
+
+/* ---------------- download FAB (month/year only) ---------------- */
+.downloadfab{
+    position:absolute; right:18px; bottom:18px; z-index:6;
+    width:52px; height:52px; border-radius:50%; border:none;
+    background:rgba(0,0,0,0.55); color:white; cursor:pointer; display:grid; place-items:center; box-shadow: 0 0 20px rgba(255, 255, 255, 0.587);
+}
+.downloadfab svg{ width:22px; height:22px; }
+.downloadfab[hidden]{ display:none; }
+
+/* ---------------- footer ---------------- */
+.footer{ text-align:center; font-size:.45rem; color:#999; padding:8px 0 14px 0; }
+
+/* ---------------- transitions (kept identical semantics to source) ---------------- */
+@keyframes calZoomOut{ from{ transform:scale(1.12); opacity:0; } to{ transform:scale(1); opacity:1; } }
+@keyframes calZoomIn{ from{ transform:scale(.86); opacity:0; } to{ transform:scale(1); opacity:1; } }
+@keyframes calSlideNext{ from{ transform:translateX(28px); opacity:0; } to{ transform:translateX(0); opacity:1; } }
+@keyframes calSlidePrev{ from{ transform:translateX(-28px); opacity:0; } to{ transform:translateX(0); opacity:1; } }
+@keyframes calPopIn{ from{ transform:scale(.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
+.cal-anim-zoom-out{ animation:calZoomOut .28s ease; }
+.cal-anim-zoom-in{ animation:calZoomIn .26s ease; }
+.cal-anim-slide-next{ animation:calSlideNext .2s ease; }
+.cal-anim-slide-prev{ animation:calSlidePrev .2s ease; }
+@media (prefers-reduced-motion:reduce){
+    .cal-anim-zoom-out,.cal-anim-zoom-in,.cal-anim-slide-next,.cal-anim-slide-prev,.searchpopup.open{ animation:none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+    <header class="topbar">
+        <button class="iconbtn" id="hamburger" aria-label="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="brand">Ngeu'la' Mbäfeung</h1>
+        <button class="iconbtn" id="shareBtn" aria-label="Share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+        </button>
+        <button class="iconbtn" id="searchToggle" aria-label="Search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="badge" id="todayBadge" aria-label="Back to today"><span id="todayBadgeNum"></span></button>
+    </header>
+
+    <div class="searchpopup" id="searchpopup">
+        <input class="searchfield" id="sday" type="number" min="1" max="31" inputmode="numeric" placeholder="Day">
+        <input class="searchfield" id="smonth" type="number" min="1" max="12" inputmode="numeric" placeholder="Month">
+        <input class="searchfield" id="syear" type="number" min="0" inputmode="numeric" placeholder="Year">
+        <button class="searchgo" id="searchgo" aria-label="Go">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+    <nav class="drawer" id="drawer">
+        <button type="button" data-level="day">Day</button>
+        <button type="button" data-level="week">Week</button>
+        <button type="button" data-level="month">Month</button>
+        <button type="button" data-level="year">Year</button>
+    </nav>
+
+    <main class="stage" id="stage">
+        <button class="edgechevron left" id="navPrev" aria-label="Previous">‹</button>
+        <button class="edgechevron right" id="navNext" aria-label="Next">›</button>
+
+        <section class="panel" id="panel-day">
+            <div class="day-weekday" id="day-weekday"></div>
+            <div class="day-num" id="day-num"></div>
+            <div class="day-monthyear" id="day-monthyear"></div>
+            <div class="day-sentence" id="day-sentence"></div>
+        </section>
+
+        <section class="panel" id="panel-week" hidden>
+            <div class="grid-title"><span class="t1" id="week-t1"></span><span class="t2" id="week-t2"></span></div>
+            <div class="weekdaysrow" id="week-weekdaysrow"></div>
+            <div class="daysgrid" id="week-daysgrid"></div>
+        </section>
+
+        <section class="panel" id="panel-month" hidden>
+            <div class="grid-title"><span class="t1" id="month-t1"></span><span class="t2" id="month-t2"></span></div>
+            <div class="weekdaysrow" id="month-weekdaysrow"></div>
+            <div class="daysgrid" id="month-daysgrid"></div>
+        </section>
+
+        <section class="panel" id="panel-year" hidden>
+            <div class="year-title" id="year-title"></div>
+            <div class="year-grid" id="year-grid"></div>
+        </section>
+
+        <button class="downloadfab" id="downloadFab" hidden aria-label="Download PDF">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M6 11l6 6 6-6"/><path d="M5 21h14"/></svg>
+        </button>
+    </main>
+
+    <div class="footer">AMT <span id="copyYear"></span></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="calendar.js"></script>
+<script>
+if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+        navigator.serviceWorker.register("sw.js").catch(function(){ /* offline support only; app still works without it */ });
+    });
+}
+</script>
+</body>
+</html>
