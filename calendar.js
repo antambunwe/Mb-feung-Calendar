@@ -156,7 +156,7 @@ function makeDayCell(d){
 
 function renderWeekView(){
     var start = weekStartFor(state.date);
-    document.getElementById("week-t1").innerHTML = "Ngap <span class=\"wk-abbr\">(Wk/Sem)</span> • " + weekNumberFor(state.date);
+    document.getElementById("week-t1").innerHTML = "Ngap <span class=\"wk-abbr\">(Sem/Wk)</span> • " + weekNumberFor(state.date);
     document.getElementById("week-t2").textContent = state.date.getFullYear();
     buildWeekdaysRow(document.getElementById("week-weekdaysrow"));
     var grid = document.getElementById("week-daysgrid");
