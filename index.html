@@ -47,7 +47,7 @@ body{
     grid-template-columns:auto 1fr auto auto auto;
     align-items:center;
     column-gap:10px;
-    padding:75px 16px 6px 16px;
+    padding:50px 16px 6px 16px;
     position:relative;
     z-index:20;
 }
@@ -69,7 +69,7 @@ body{
     padding:8px 0; min-width:200px;
     box-shadow:0 12px 30px rgba(0,0,0,0.55);
 }
-.langmenu.open{ display:block; animation:calPopIn .18s ease; transform-origin:top left; }
+.langmenu.open{ display:block; animation:calPopIn .18s ease; transform-origin:top left; box-shadow: 0 0 20px rgba(255, 255, 255, 0.172);}
 .langmenu button{
     display:flex; align-items:center; column-gap:12px;
     width:100%; background:none; border:none; color:white;
@@ -128,7 +128,7 @@ body{
     background:none; border:none; color:white; font-size:1.05rem; font-weight:bold;
     text-align:left; padding:10px 6px; cursor:pointer; opacity:1;
 }
-.drawer button.current{ opacity:0.35; background-color: rgba(255, 255, 255, 0.094);  border-radius: 6px;}
+.drawer button.current{ opacity:0.95; background-color: rgba(255, 255, 255, 0.094);  border-radius: 6px;}
 
 /* ---------------- contact popup ---------------- */
 .contactscrim{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:34; }
@@ -138,7 +138,7 @@ body{
     max-height:82vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
     background:#0b0b0b; border-radius:18px; z-index:35;
     padding:30px 20px 26px 20px;
-    box-shadow:0 0 30px rgba(255,255,255,0.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.172);;
 }
 .contactpopup.open{ display:block; animation:calPopIn .2s ease; }
 .contactclose{
@@ -201,7 +201,7 @@ body{
 #panel-week .grid-title{ display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; text-align:center; font-weight:bold; align-self: start; padding-top:100px; }
 #panel-week .grid-title .t1{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; }
 #panel-week .grid-title .t2{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; margin-top:2px;}
-#panel-week .grid-title .t1 .wk-abbr{ font-weight:200; font-size:.7em; color: #999;}
+#panel-week .grid-title .t1 .wk-abbr{ font-weight:200; font-size:.7em; color: white;}
 #panel-week .weekdaysrow{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; justify-items: center; align-content: center; font-weight:bold; padding-top: 20px;
     font-size:clamp(.7rem,3.2vw,1rem); }
 #panel-week .weekdaysrow .seo{ color:var(--red); }
@@ -224,7 +224,7 @@ body{
 #panel-month .grid-title{ display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; text-align:center; font-weight:bold; align-self: start; padding-top:100px;  }
 #panel-month .grid-title .t1{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; }
 #panel-month .grid-title .t2{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; margin-top:2px; }
-#panel-month .grid-title .t1 .mo-abbr{ font-weight:200; font-size:.7em; color: #999; }
+#panel-month .grid-title .t1 .mo-abbr{ font-weight:200; font-size:.7em; color: white; }
 #panel-month .weekdaysrow{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; justify-items: center; align-content: center; font-weight:bold; padding-top: 20px;
     font-size:clamp(.7rem,3.2vw,1rem); }
 #panel-month .weekdaysrow .seo{ color:var(--red); }
@@ -297,17 +297,17 @@ body{
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div class="brandwrap">
-            <h1 class="brand" id="brandText">Ngeu'la' Mbäfeung</h1>
+            <h1 class="brand" id="brandText">Mbäfeung</h1>
             <button class="brandchevron" id="brandChevron" aria-label="Choose language">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="langmenu" id="langMenu">
-                <button type="button" data-lang="Ngiemboon">Ngiemboon</button>
-                <button type="button" data-lang="Ngombaa">Ngombaa</button>
-                <button type="button" data-lang="Mengaaka">Mengaaka</button>
-                <button type="button" data-lang="Yemba">Yemba</button>
                 <button type="button" data-lang="Ghomala">Ghomala</button>
                 <button type="button" data-lang="Medümbä">Medümbä</button>
+                <button type="button" data-lang="Mengaaka">Mengaaka</button>
+                <button type="button" data-lang="Ngiemboon">Ngiemboon</button>
+                <button type="button" data-lang="Ngombaa">Ngombaa</button>
+                <button type="button" data-lang="Yemba">Yemba</button>
             </div>
         </div>
         <button class="iconbtn" id="shareBtn" aria-label="Share">
@@ -330,10 +330,10 @@ body{
 
     <div class="scrim" id="scrim"></div>
     <nav class="drawer" id="drawer">
-        <button type="button" data-level="day">Day</button>
-        <button type="button" data-level="week">Week</button>
-        <button type="button" data-level="month">Month</button>
-        <button type="button" data-level="year">Year</button>
+        <button type="button" data-level="day">Ley • Jour/Day</button>
+        <button type="button" data-level="week">Ngap • Semaine/Week</button>
+        <button type="button" data-level="month">Sang • Mois/Month</button>
+        <button type="button" data-level="year">Ngeu' • Année/Year</button>
         <button type="button" id="contactDrawerBtn">Contact</button>
     </nav>
 
@@ -341,7 +341,7 @@ body{
     <div class="contactpopup" id="contactPopup">
         <button class="contactclose" id="contactClose" aria-label="Close">&times;</button>
         <h2 class="contact-title">Contact us</h2>
-        <p class="contact-desc">In motivating people, you've got to engage their minds and their hearts. I motivate people, I hope, by example - and perhaps by excitement, by having productive ideas to make others feel involved.</p>
+        <p class="contact-desc">Any feedback? Fill the form and submit. We appreciate!</p>
         <form id="contactForm">
             <div class="contact-row">
                 <input type="text" id="contactName" placeholder="First Name" required>
@@ -353,23 +353,23 @@ body{
             </div>
         </form>
         <h3 class="contact-subtitle">More ways to connect</h3>
-        <p class="contact-subdesc">In motivating people, you've got to engage their minds and their hearts. I motivate people, I hope, by example - and perhaps by excitement, by having productive ideas to make others feel involved.</p>
+        <p class="contact-subdesc">You can as well get to us through the following options!</p>
         <div class="contactlinks">
-            <a href="tel:1234567890">
+            <a href="tel:+237">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span>123-456-7890</span>
+                <span>WhatsApp(+237)</span>
             </a>
-            <a href="mailto:hello@domain.com">
+            <a href="mailto:mbäfeung@gmail.comm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
-                <span>hello@domain.com</span>
+                <span>mbäfeung@gmail.com</span>
             </a>
-            <a href="https://websitename.com" target="_blank" rel="noopener">
+            <a href="https://metaglossia.com" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                <span>websitename.com</span>
+                <span>metaglossia.com</span>
             </a>
-            <a href="https://maps.google.com/?q=4567+Anywhere+USA" target="_blank" rel="noopener">
+            <a href="https://maps.google.com/?q=cameroon" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>4567 Anywhere, USA</span>
+                <span>Cameroon</span>
             </a>
         </div>
     </div>
