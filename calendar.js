@@ -65,41 +65,13 @@ function weekNumberFor(date){
 var today = new Date();
 var todayY = today.getFullYear(), todayM = today.getMonth(), todayD = today.getDate();
 
-/* ---------------- app icon: today's day number + cycle abbreviation ----------------
-   Draws the same look as the supplied app_icon_*.png (red bold day number over a
-   black cycle-abbreviation label on a light background) and uses it to refresh the
-   in-app "today" badge and the browser-tab favicon once per day.
-   NOTE (see README): this updates the *favicon* dynamically at runtime. It cannot
-   rewrite the actual home-screen/launcher icon files that manifest.json points to —
-   no web standard allows a page to overwrite its own installed icon on disk. The
-   static icons/icon-*.png shipped in this folder are the fallback the OS keeps
-   showing between regenerations. See README.md for how to finish real daily
-   home-screen icon updates (service worker + build step, or a native wrapper). */
-function drawIconCanvas(size, dayNum, cycleAbbr){
-    var c = document.createElement("canvas");
-    c.width = size; c.height = size;
-    var ctx = c.getContext("2d");
-    ctx.fillStyle = "#dcdcdc";
-    ctx.fillRect(0,0,size,size);
-    ctx.fillStyle = "#c81e1e";
-    ctx.font = "bold " + Math.round(size*0.46) + "px sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(String(dayNum), size/2, size*0.42);
-    ctx.fillStyle = "#111";
-    ctx.font = "bold " + Math.round(size*0.16) + "px sans-serif";
-    ctx.fillText(cycleAbbr, size/2, size*0.78);
-    return c;
-}
-function refreshDailyIcon(){
+/* ---------------- daily rollover ----------------
+   The favicon and home-screen icons are the static Mbäfeung logo (icon-144/192/512.png)
+   at all times — no per-day icon redraw. This interval just keeps the app's internal
+   "today" in sync if the app is left open across local midnight. */
+setInterval(function(){ // re-check at each hour boundary so "today" flips over at local midnight without a reload
     var t = new Date();
-    var canvas = drawIconCanvas(192, t.getDate(), cycleAbbrFor(t.getFullYear(), t.getMonth(), t.getDate()));
-    var link = document.getElementById("favicon");
-    if(link){ link.href = canvas.toDataURL("image/png"); }
-}
-refreshDailyIcon();
-setInterval(function(){ // re-check at each hour boundary so the icon flips over at local midnight without a reload
-    var t = new Date();
-    if(t.getHours() === 0 && t.getMinutes() < 2){ refreshDailyIcon(); todayY = t.getFullYear(); todayM = t.getMonth(); todayD = t.getDate(); render(); }
+    if(t.getHours() === 0 && t.getMinutes() < 2){ todayY = t.getFullYear(); todayM = t.getMonth(); todayD = t.getDate(); render(); }
 }, 60000);
 
 /* ---------------- state ---------------- */
@@ -134,7 +106,7 @@ function showOnly(level){
 function render(){
     downloadFab.hidden = !(state.level === "month" || state.level === "year");
     navPrev.hidden = false; navNext.hidden = false;
-    Array.prototype.forEach.call(drawer.querySelectorAll("button"), function(btn){
+    Array.prototype.forEach.call(drawer.querySelectorAll("button[data-level]"), function(btn){
         btn.classList.toggle("current", btn.getAttribute("data-level") === state.level);
     });
     if(state.level === "day"){ showOnly("day"); renderDayView(); }
@@ -184,7 +156,7 @@ function makeDayCell(d){
 
 function renderWeekView(){
     var start = weekStartFor(state.date);
-    document.getElementById("week-t1").innerHTML = "Ngap <span class=\"wk-abbr\">(Sem/Wk)</span> • " + weekNumberFor(state.date);
+    document.getElementById("week-t1").innerHTML = "Ngap <span class=\"wk-abbr\">(Wk/Sem)</span> • " + weekNumberFor(state.date);
     document.getElementById("week-t2").textContent = state.date.getFullYear();
     buildWeekdaysRow(document.getElementById("week-weekdaysrow"));
     var grid = document.getElementById("week-daysgrid");
@@ -303,15 +275,54 @@ function goToLevel(newLevel){
     closeDrawer();
     render();
 }
-Array.prototype.forEach.call(drawer.querySelectorAll("button"), function(btn){
+Array.prototype.forEach.call(drawer.querySelectorAll("button[data-level]"), function(btn){
     btn.addEventListener("click", function(){ goToLevel(btn.getAttribute("data-level")); });
 });
 
-/* ---------------- today badge: reload ---------------- */
+/* ---------------- today badge: always returns to the day panel showing today,
+   regardless of whatever panel/level was active when it was tapped ---------------- */
 document.getElementById("todayBadge").addEventListener("click", function(){
+    pendingTransition = "zoom-in";
+    state.level = "day";
     state.date = new Date();
-    pendingTransition = null;
     render();
+});
+
+/* ---------------- brand dropdown: language picker ---------------- */
+var brandChevron = document.getElementById("brandChevron");
+var langMenu = document.getElementById("langMenu");
+var brandText = document.getElementById("brandText");
+function openLangMenu(){ langMenu.classList.add("open"); }
+function closeLangMenu(){ langMenu.classList.remove("open"); }
+brandChevron.addEventListener("click", function(e){
+    e.stopPropagation();
+    if(langMenu.classList.contains("open")){ closeLangMenu(); } else { openLangMenu(); }
+});
+Array.prototype.forEach.call(langMenu.querySelectorAll("button"), function(btn){
+    btn.addEventListener("click", function(){
+        brandText.textContent = btn.getAttribute("data-lang");
+        closeLangMenu();
+    });
+});
+document.addEventListener("click", function(e){
+    if(langMenu.classList.contains("open") && !langMenu.contains(e.target) && e.target !== brandChevron){ closeLangMenu(); }
+});
+
+/* ---------------- drawer: contact popup ---------------- */
+var contactDrawerBtn = document.getElementById("contactDrawerBtn");
+var contactScrim = document.getElementById("contactScrim");
+var contactPopup = document.getElementById("contactPopup");
+var contactClose = document.getElementById("contactClose");
+var contactForm = document.getElementById("contactForm");
+function openContactPopup(){ contactPopup.classList.add("open"); contactScrim.classList.add("open"); }
+function closeContactPopup(){ contactPopup.classList.remove("open"); contactScrim.classList.remove("open"); }
+contactDrawerBtn.addEventListener("click", function(){ closeDrawer(); openContactPopup(); });
+contactClose.addEventListener("click", closeContactPopup);
+contactScrim.addEventListener("click", closeContactPopup);
+contactForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    contactForm.reset();
+    closeContactPopup();
 });
 
 /* ---------------- prev/next chevrons + swipe left/right (step within level) ---------------- */

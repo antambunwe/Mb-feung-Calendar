@@ -6,8 +6,11 @@
 <title>Ngeu'la' Mbäfeung</title>
 <meta name="theme-color" content="#1a1a1a">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" id="favicon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mbäfeung">
 <style>
 /* ============================================================
    MBÄFEUNG — mobile-only, full-screen calendar app
@@ -44,7 +47,7 @@ body{
     grid-template-columns:auto 1fr auto auto auto;
     align-items:center;
     column-gap:10px;
-    padding:50px 16px 6px 16px;
+    padding:75px 16px 6px 16px;
     position:relative;
     z-index:20;
 }
@@ -53,7 +56,30 @@ body{
     width:28px; height:28px; display:grid; place-items:center; padding:0;
 }
 .iconbtn svg{ width:22px; height:22px; }
+.brandwrap{ position:relative; min-width:0; display:flex; align-items:center; column-gap:4px; }
 .brand{ font-size:1.05rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.brandchevron{
+    background:none; border:none; color:white; cursor:pointer; padding:4px;
+    display:grid; place-items:center; flex:none;
+}
+.brandchevron svg{ width:13px; height:13px; }
+.langmenu{
+    display:none; position:absolute; top:36px; left:-4px; z-index:30;
+    background:#0b0b0b; border-radius:0 14px 14px 14px;
+    padding:8px 0; min-width:200px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.55);
+}
+.langmenu.open{ display:block; animation:calPopIn .18s ease; transform-origin:top left; }
+.langmenu button{
+    display:flex; align-items:center; column-gap:12px;
+    width:100%; background:none; border:none; color:white;
+    font-size:1rem; font-weight:600; text-align:left;
+    padding:11px 22px; cursor:pointer; font-family:inherit;
+}
+.langmenu button::before{
+    content:""; width:7px; height:7px; border-radius:50%;
+    border:1.5px solid white; flex:none;
+}
 .badge{
     justify-self:end;
     min-width:30px; height:30px; padding:0 6px;
@@ -102,7 +128,48 @@ body{
     background:none; border:none; color:white; font-size:1.05rem; font-weight:bold;
     text-align:left; padding:10px 6px; cursor:pointer; opacity:1;
 }
-.drawer button.current{ opacity:0.95; background-color: rgba(255, 255, 255, 0.094);  border-radius: 6px;}
+.drawer button.current{ opacity:0.35; background-color: rgba(255, 255, 255, 0.094);  border-radius: 6px;}
+
+/* ---------------- contact popup ---------------- */
+.contactscrim{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:34; }
+.contactscrim.open{ display:block; }
+.contactpopup{
+    display:none; position:fixed; left:16px; right:16px; top:50%; transform:translateY(-50%);
+    max-height:82vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:#0b0b0b; border-radius:18px; z-index:35;
+    padding:30px 20px 26px 20px;
+    box-shadow:0 0 30px rgba(255,255,255,0.1);
+}
+.contactpopup.open{ display:block; animation:calPopIn .2s ease; }
+.contactclose{
+    position:absolute; top:12px; right:12px; background:none; border:none; color:white;
+    font-size:1.6rem; line-height:1; cursor:pointer; width:32px; height:32px; display:grid; place-items:center;
+}
+.contact-title{ text-align:center; font-size:clamp(1.3rem,6vw,1.7rem); font-weight:bold; margin-bottom:12px; }
+.contact-desc{ text-align:center; font-size:.72rem; line-height:1.55; opacity:.85; margin-bottom:20px; padding:0 4px; }
+.contact-row{ display:flex; column-gap:10px; margin-bottom:12px; }
+.contact-row input{
+    flex:1; min-width:0; background:none; border:1px solid rgba(255,255,255,0.5); border-radius:8px;
+    padding:13px 10px; color:white; font:inherit; font-size:.85rem;
+}
+.contact-row input::placeholder{ color:rgba(255,255,255,0.6); }
+.contact-message{ position:relative; margin-bottom:24px; }
+.contact-message textarea{
+    width:100%; min-height:96px; resize:vertical; background:none; border:1px solid rgba(255,255,255,0.5);
+    border-radius:8px; padding:13px 54px 13px 10px; color:white; font:inherit; font-size:.85rem;
+}
+.contact-message textarea::placeholder{ color:rgba(255,255,255,0.6); }
+.contactsend{
+    position:absolute; right:8px; bottom:8px; width:44px; height:44px; border-radius:50%;
+    background:white; color:#111; border:none; font-size:.72rem; font-weight:bold; cursor:pointer; font-family:inherit;
+}
+.contact-subtitle{ text-align:center; font-size:clamp(1.1rem,5vw,1.4rem); font-weight:bold; margin-bottom:10px; }
+.contact-subdesc{ text-align:center; font-size:.68rem; line-height:1.55; opacity:.85; margin-bottom:20px; padding:0 4px; }
+.contactlinks{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.contactlinks a{
+    display:grid; justify-items:center; row-gap:9px; color:white; text-decoration:none; font-size:.6rem; line-height:1.3;
+}
+.contactlinks svg{ width:22px; height:22px; opacity:.9; }
 
 /* ---------------- stage (holds the 4 panels + edge chevrons) ---------------- */
 .stage{ position:relative; overflow:hidden; min-height:0; }
@@ -134,7 +201,7 @@ body{
 #panel-week .grid-title{ display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; text-align:center; font-weight:bold; align-self: start; padding-top:100px; }
 #panel-week .grid-title .t1{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; }
 #panel-week .grid-title .t2{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; margin-top:2px;}
-#panel-week .grid-title .t1 .wk-abbr{ font-weight:200; font-size:.7em; color: white;}
+#panel-week .grid-title .t1 .wk-abbr{ font-weight:200; font-size:.7em; color: #999;}
 #panel-week .weekdaysrow{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; justify-items: center; align-content: center; font-weight:bold; padding-top: 20px;
     font-size:clamp(.7rem,3.2vw,1rem); }
 #panel-week .weekdaysrow .seo{ color:var(--red); }
@@ -157,7 +224,7 @@ body{
 #panel-month .grid-title{ display: grid; grid-template-rows: auto auto; justify-content: center; align-content: center; text-align:center; font-weight:bold; align-self: start; padding-top:100px;  }
 #panel-month .grid-title .t1{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; }
 #panel-month .grid-title .t2{ font-size:clamp(1.2rem,5.5vw,1.8rem); display:block; margin-top:2px; }
-#panel-month .grid-title .t1 .mo-abbr{ font-weight:200; font-size:.7em; color: white; }
+#panel-month .grid-title .t1 .mo-abbr{ font-weight:200; font-size:.7em; color: #999; }
 #panel-month .weekdaysrow{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; justify-items: center; align-content: center; font-weight:bold; padding-top: 20px;
     font-size:clamp(.7rem,3.2vw,1rem); }
 #panel-month .weekdaysrow .seo{ color:var(--red); }
@@ -229,7 +296,20 @@ body{
         <button class="iconbtn" id="hamburger" aria-label="Menu">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
-        <h1 class="brand">Mbäfeung</h1>
+        <div class="brandwrap">
+            <h1 class="brand" id="brandText">Ngeu'la' Mbäfeung</h1>
+            <button class="brandchevron" id="brandChevron" aria-label="Choose language">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="langmenu" id="langMenu">
+                <button type="button" data-lang="Ngiemboon">Ngiemboon</button>
+                <button type="button" data-lang="Ngombaa">Ngombaa</button>
+                <button type="button" data-lang="Mengaaka">Mengaaka</button>
+                <button type="button" data-lang="Yemba">Yemba</button>
+                <button type="button" data-lang="Ghomala">Ghomala</button>
+                <button type="button" data-lang="Medümbä">Medümbä</button>
+            </div>
+        </div>
         <button class="iconbtn" id="shareBtn" aria-label="Share">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
         </button>
@@ -250,11 +330,49 @@ body{
 
     <div class="scrim" id="scrim"></div>
     <nav class="drawer" id="drawer">
-        <button type="button" data-level="day">Ley • Jour/Day</button>
-        <button type="button" data-level="week">Ngap • Semaine/Week</button>
-        <button type="button" data-level="month">Sang • Mois/Month</button>
-        <button type="button" data-level="year">Ngeu' • Année/Year</button>
+        <button type="button" data-level="day">Day</button>
+        <button type="button" data-level="week">Week</button>
+        <button type="button" data-level="month">Month</button>
+        <button type="button" data-level="year">Year</button>
+        <button type="button" id="contactDrawerBtn">Contact</button>
     </nav>
+
+    <div class="contactscrim" id="contactScrim"></div>
+    <div class="contactpopup" id="contactPopup">
+        <button class="contactclose" id="contactClose" aria-label="Close">&times;</button>
+        <h2 class="contact-title">Contact us</h2>
+        <p class="contact-desc">In motivating people, you've got to engage their minds and their hearts. I motivate people, I hope, by example - and perhaps by excitement, by having productive ideas to make others feel involved.</p>
+        <form id="contactForm">
+            <div class="contact-row">
+                <input type="text" id="contactName" placeholder="First Name" required>
+                <input type="email" id="contactEmail" placeholder="Email address" required>
+            </div>
+            <div class="contact-message">
+                <textarea id="contactMessage" placeholder="Message..." required></textarea>
+                <button type="submit" class="contactsend">send</button>
+            </div>
+        </form>
+        <h3 class="contact-subtitle">More ways to connect</h3>
+        <p class="contact-subdesc">In motivating people, you've got to engage their minds and their hearts. I motivate people, I hope, by example - and perhaps by excitement, by having productive ideas to make others feel involved.</p>
+        <div class="contactlinks">
+            <a href="tel:1234567890">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>123-456-7890</span>
+            </a>
+            <a href="mailto:hello@domain.com">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+                <span>hello@domain.com</span>
+            </a>
+            <a href="https://websitename.com" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>websitename.com</span>
+            </a>
+            <a href="https://maps.google.com/?q=4567+Anywhere+USA" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>4567 Anywhere, USA</span>
+            </a>
+        </div>
+    </div>
 
     <main class="stage" id="stage">
         <button class="edgechevron left" id="navPrev" aria-label="Previous">‹</button>
@@ -295,5 +413,12 @@ body{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="calendar.js"></script>
+<script>
+if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+        navigator.serviceWorker.register("sw.js").catch(function(){ /* offline support only; app still works without it */ });
+    });
+}
+</script>
 </body>
 </html>
